@@ -1,0 +1,17 @@
+Model: Gemini
+Prompt: I'm calculating the parameters of gpt-oss-20b. When i'm calculating the attention layer, after adding all the projections together, I got 26,550,080, while the model from huggingface has model.layers.23.self_attn : 26,550,144
+Verification: I went to the line in the model card cited in the response and confirmed that it's there and makes sense. I composed my answer based on the model card, not the response of the LLM. 
+
+Model: ChatGPT5
+Prompt: I calculated the total parameters of gpt2-medium is 209,494,272, but huggingface says it's 366M params.
+Verification: Based on the response, I went to google the exact hyperparameters of gpt2-medium, large and xl and realized that I didn't increase embedding size for those calculations. 
+
+Model: ChatGPT5
+Prompt: format this in latex with ordered list, and each one should be in textit. 1. Report the exact configuration you use (cite the source). [4 pts] 2. Derive component-wise formulas (as in Problem 1) consistent with the chosen architecture, and compute both per-layer and total parameter counts using your conventions. [20 pts] 3. Report the final totals as concrete parameter counts (numbers). If MoE, also report active parameters per token. [12 pts] 4. Provide code that demonstrates a programmatic check. [12 pts] 5. Identify the key components that differ from GPT-2. For each: • Summarize the design motivation in your own words. [12 pts] • Provide evidence of effectiveness from the paper/tech report (ablation, benchmark, or efficiency claim). [12 pts] 6. Give a short overall summary (bullets or a short paragraph) of the main design trends you observe. [8 pts]
+Verification: I read through to make sure everything was correct after formatting. 
+
+Model: ChatGPT5
+Prompt: write python code to import gpt-oss-20b model from hugging face, and print out all the layers. I only need to count the parameters, so you can only load the meta. 
+Verification: I read through the code it generates, and realized that the model name in the code it generated was incorrect. I went to huggingface and changed to the correct model name. 
+
+I also used GitHub Copilot when calculating parameters from the hyperparameters, but I had to correct it every time, so I stopped using it halfway. 

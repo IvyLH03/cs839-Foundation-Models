@@ -400,14 +400,84 @@ Manba model: selective SSM
 - Target dataset: the new dataset to be adapted to (x^t, y^t)
 
 1. Dimensionality alignment: 
+
    - Task-specific embedder -> Body -> task-specific predictor
-   - make the target data compatible with the pretrained model
+   - make the target data compatible with the pretrained model (in terms of dimension)
    - Input: convolution for image.
    - Output: pooling and linear classifier. 
-2. Distribution Alignment
-   - learn the task-specific embedder to make the distribution align with the input that the model already kinda knows - looks more similar to the source dataset. 
-   - Learn the embedder f^t to minimize the distance between 
-3. 
 
-# Model Editing
+2. Distribution Alignment
+
+   - learn the task-specific embedder to make the distribution align with the input that the model already kinda knows - looks more similar to the source dataset. 
+
+   - > Model might be more familiar with some part of the space, not all over the dimension. 
+     >
+     > So let's make sure we're sending the target data to somewhere very similar. 
+     >
+     > ==why are we considering y when we're changing the distribution of x?== 
+
+   - Define a "distance" between source dataset and target dataset: Learn the embedder f^t to minimize the distance between $(f^t(x^t), y^t)$ and $(f^s(x^s), y^s)$
+
+     - It's not difficult to define distance between embeddings, but the outputs can be very different (for different tasks)
+     - So need a distance function: **Optimal Transport**
+       - We find a "move" function that transform the distribution
+       - And we find the "move" function that has the min cost
+       - Instead of talking about y ("labels") directly, we replace y with P(X|y) (distribution of vectors that lead to the predictions)
+       - We use **Wasserstein**: $W(P(X|y), P(X|y'))$
+     - We break down the OTDD into 1. distribution of inputs and 2. the Wasserstein we just defined. 
+
+     > ==Still confused about how exactly Wasserstein is computed.==
+     >
+     > ==class conditional distribution==
+
+3. Fine tune the input and output network weights
+
+- Result: Changing distribution alignment works pretty well: it can even beat traditional Neural Architecture Search (NAS) i.e. find the best architecture. 
+
+# Alignment
+
+"Do the users like it? "
+
+Use reinforcement learning. But how? 
+
+**Reinforcement Learning from Human Feedback**: RLHF
+
+Don't change the model directly, but train another reward model based on (prompt, winning_response, losing_response). This reward model is also a language model, that for a particular generation, it can output score. 
+
+1. Get feedback
+
+   - Produce different responses for the same prompt (different models or same model)
+
+   - Ask human which is better (binary output), or ask them to give a score
+
+2. Preference mode
+
+   - train this reward model to give scores for different responses
+
+   - based on the log likelihood
+
+     > ==log likelihood==
+
+   - You can start from pretrained reward models. There's a benchmark: rewardbench
+
+3. Fine tuning with RL
+
+   - Action space: all the tokens we can output
+   - State space: sequence tokens we have seen
+   - Reward function: the trained reward model
+   - Policy: the new version of the language model we're training. Hopefully it will output a higher reward generation. 
+   - **Proximal Policy Optimization**: try to make it get better rewards, but at the same time, define a "penalty" of changling too much from the original model, so it won't overfit on rewards. 
+
+- Problem with too much RLHF: model starts to refuse responding to anything
+
+Why RL: (Hypothesis)
+
+- SL failed to stop model lying when it doesn't know: it's not in the dataaset. Also, It's hard to put "i don't know" in the training set because it will only encourage them to reply "i don't know" to that specific question
+- RL encourages truth telling. Most of the time if it makes things up, it will lose reward. 
+- **Abstains**
+  - High reward: correct
+  - Medium reward: abstain
+  - Negative reward: incorrect
+
+
 
