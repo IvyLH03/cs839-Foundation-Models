@@ -446,19 +446,26 @@ Don't change the model directly, but train another reward model based on (prompt
 
 1. Get feedback
 
-   - Produce different responses for the same prompt (different models or same model)
+   - Produce different responses for the same prompt (the responses can be produced from the different models or the same model)
+     - Problem with different model: too different, don't do much
 
-   - Ask human which is better (binary output), or ask them to give a score
+     - Problem with the same model: hard to do the RL training in real time
+
+   - Ask human which is better (binary output), or ask them to give a score (hard to aggregate because different raters have different styles, like 2% 5's or 30% 5's)
 
 2. Preference mode
 
    - train this reward model to give scores for different responses
 
-   - based on the log likelihood
+   - Preference model: Bradley-Terry model
+
+   - Loss: based on the log likelihood
 
      > ==log likelihood==
 
    - You can start from pretrained reward models. There's a benchmark: rewardbench
+
+   - This model has to be another language model, but produce a single scale value
 
 3. Fine tuning with RL
 
@@ -467,17 +474,94 @@ Don't change the model directly, but train another reward model based on (prompt
    - Reward function: the trained reward model
    - Policy: the new version of the language model we're training. Hopefully it will output a higher reward generation. 
    - **Proximal Policy Optimization**: try to make it get better rewards, but at the same time, define a "penalty" of changling too much from the original model, so it won't overfit on rewards. 
+     - We calculate the D_KL, which is comparing the possibility distribution of the next token generated. 
 
 - Problem with too much RLHF: model starts to refuse responding to anything
 
 Why RL: (Hypothesis)
 
-- SL failed to stop model lying when it doesn't know: it's not in the dataaset. Also, It's hard to put "i don't know" in the training set because it will only encourage them to reply "i don't know" to that specific question
+- For knowledge-seeking interaction: SL failed to stop model lying when it doesn't know: it's not in the dataaset. Also, It's hard to put "i don't know" in the training set because it will only encourage them to reply "i don't know" to that specific question
 - RL encourages truth telling. Most of the time if it makes things up, it will lose reward. 
-- **Abstains**
+- **Abstains**: craft a reward model to encourage abstains
   - High reward: correct
   - Medium reward: abstain
   - Negative reward: incorrect
+
+RLHF Problems: 
+
+1. Human Feedback
+   1. Bias, data poisoners, lack of care
+   2. What is "good" output? 
+   3. High quality data is hard to get: good prompts that the users would actually ask
+2. Reward model
+   1. Friendlines, helpfulness etc. Depends on context, different types, can't do universally to all users, but personalizing RLHF is really expensive
+   2. Reward hacking. e.g. May prefer longer response because in training set, longer is preffered because the shorter one is dumb, but that's not necessarily always the case
+
+
+
+Alternatives
+
+​	DPO	RLAIF
+
+
+
+RL outside of alignments
+
+- Not to make human happy, but to solve some problems
+- Reward? There's not a single correct answer. Doesn't have to match every single tokens. 
+- Verifiers:
+  -  e.g.  check the final answer for math problems; write unit tests to test generated code; other reasoning
+  - We have a lot of data in math and code. 
+  - 
+
+PPO
+
+GRPO
+
+### Efficient Training
+
+Flash Attention: Use faster memories to optimize training time.  
+
+- Tiling
+
+### Efficient Inference
+
+Autoregressive models, you need to wait until the last token is generated to start generate the next one
+
+- Why not use not autoregressive models (e.g. diffusion models)? So it can generate the entire sequence at the same time. 
+- Another idea: **Speculativve Decoding** offload generation to a faster model, and use the original model only to check the generation, which can be done in parallel, and the speed is equivalent to using the original model to generate one token. 
+- **Adaptive Language Modeling**: sometimes don't wait until the end of all layers. Cut off layers and generate the token when it's safe. 
+- **Parallelizing Decoding: Medusa Decoding**: generate top-k candidates for each position, and then assemble into a full sequence 
+
+
+
+
+
+
+
+### Agents
+
+Building blocks:
+
+input
+
+Memories
+
+1. Long context windows
+   - It used to be not enough
+   - Context window can be structured
+   - Long context windows: It will lose information. The model pays a lot of attention to the beginning and the end, and sometimes middle is lost
+
+Reasoning and Planning
+
+- Including older methods (e.g. CoT) e.g. ReAct: thought, act, observation
+
+Tool
+
+- Tool Noise/Uncertainty/Tool use errors
+- Creating New Tools: A powerful LLM create new tool, and then use a lightweight model to run the agent in long term
+
+
 
 
 
